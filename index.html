@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Session Tracker — Recovery Suite</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f5f5f0;color:#1a1a1a}
+.header{background:#1a1a1a;color:#fff;padding:24px 32px}
+.header h1{font-size:22px;font-weight:500}
+.header p{font-size:13px;color:#999;margin-top:4px}
+.container{max-width:1000px;margin:0 auto;padding:24px}
+.card{background:#fff;border-radius:10px;border:1px solid #e0e0e0;padding:20px;margin-bottom:16px}
+.metric-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-bottom:24px}
+.metric{background:#e0f2f1;border:1px solid #00695c22;border-radius:8px;padding:16px}
+.metric .label{font-size:11px;color:#888;text-transform:uppercase;letter-spacing:.5px}
+.metric .value{font-size:24px;font-weight:500;margin-top:4px}
+.metric .sub{font-size:12px;color:#999;margin-top:2px}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th{text-align:left;padding:10px 12px;border-bottom:2px solid #e0e0e0;font-weight:500;color:#666;font-size:11px;text-transform:uppercase;letter-spacing:.5px}
+td{padding:10px 12px;border-bottom:1px solid #f0f0f0}
+tr:hover td{background:#fafaf8}
+tfoot td{font-weight:500;border-top:2px solid #ccc;background:#fafaf8}
+.chart-wrap{position:relative;height:300px;margin:12px 0}
+.section-title{font-size:18px;font-weight:500;margin:32px 0 16px;padding-bottom:8px;border-bottom:1px solid #e0e0e0}
+.section-title:first-of-type{margin-top:0}
+.year-row td{font-weight:500;font-size:15px;background:#e0f2f1}
+.btn{padding:8px 16px;border-radius:8px;border:1px solid #ddd;background:#fff;cursor:pointer;font-size:13px;font-weight:500}
+.btn:hover{background:#f5f5f0}
+.right{text-align:right}
+.month-row{cursor:pointer;user-select:none}
+.month-row td:first-child::before{content:'\25b8 ';color:#00695c;font-size:12px}
+.month-row.open td:first-child::before{content:'\25be '}
+.breakdown-row{display:none}
+.breakdown-row.visible{display:table-row}
+.breakdown-row td{padding:6px 12px 6px 32px;font-size:13px;color:#555;border-bottom:1px solid #f5f5f0;background:#fafaf8}
+.breakdown-row td:first-child{color:#888}
+.svc-bar{display:inline-block;height:14px;background:#00695c33;border-radius:3px;margin-right:8px;vertical-align:middle;min-width:2px}
+</style>
+</head>
+<body>
+<div class="header">
+  <h1>Recovery Suite — Session tracker</h1>
+  <p>TD Athletes Edge | Recovery Suite 1 + 2 combined | Net revenue (actual payments, package rates applied)</p>
+</div>
+<div class="container">
+  <div class="metric-grid" id="metrics"></div>
+  <h2 class="section-title">Yearly summary</h2>
+  <div class="card">
+    <table>
+      <thead><tr><th>Year</th><th class="right">Sessions</th><th class="right">Hours</th><th class="right">Revenue</th><th class="right">Avg sessions/mo</th><th class="right">Avg hrs/mo</th><th class="right">Avg hrs/wk</th></tr></thead>
+      <tbody id="yearBody"></tbody>
+    </table>
+  </div>
+  <h2 class="section-title">Monthly sessions</h2>
+  <div class="card"><div class="chart-wrap"><canvas id="sessionChart"></canvas></div></div>
+  <h2 class="section-title">Monthly revenue (net)</h2>
+  <div class="card"><div class="chart-wrap"><canvas id="revenueChart"></canvas></div></div>
+  <h2 class="section-title">Monthly detail</h2>
+  <p style="font-size:13px;color:#888;margin-bottom:12px">Click a month to see the session breakdown by service type</p>
+  <div class="card">
+    <table>
+      <thead><tr><th>Month</th><th class="right">Sessions</th><th class="right">Hours</th><th class="right">Revenue</th></tr></thead>
+      <tbody id="monthBody"></tbody>
+      <tfoot id="monthFoot"></tfoot>
+    </table>
+  </div>
+  <div style="margin:8px 0 32px"><button class="btn" onclick="exportCSV()">Export as CSV</button></div>
+</div>
+<script>
+const DATA = [{"m":"2025-07","s":23,"min":635,"r":112400},{"m":"2025-09","s":9,"min":270,"r":4500},{"m":"2025-10","s":9,"min":255,"r":35000},{"m":"2025-11","s":13,"min":435,"r":68500},{"m":"2025-12","s":12,"min":360,"r":64500},{"m":"2026-01","s":24,"min":750,"r":147500},{"m":"2026-02","s":22,"min":705,"r":117500},{"m":"2026-03","s":27,"min":885,"r":149000},{"m":"2026-04","s":14,"min":420,"r":75500},{"m":"2026-05","s":43,"min":2850,"r":178000},{"m":"2026-06","s":36,"min":2085,"r":136250},{"m":"2026-07","s":27,"min":810,"r":90500},{"m":"2026-08","s":73,"min":2700,"r":169500},{"m":"2026-09","s":126,"min":4725,"r":439000}];
+const YEARS = {"2025":{"s":66,"min":1955,"r":284900,"months":5},"2026":{"s":392,"min":15930,"r":1502750,"months":9}};
+const BREAKDOWN = {"2025-07":[{"n":"Contrast Therapy","s":9,"min":370,"r":60400},{"n":"Cold Plunge","s":8,"min":120,"r":20000},{"n":"Sauna","s":4,"min":85,"r":18500},{"n":"Recovery Service","s":2,"min":60,"r":13500}],"2025-09":[{"n":"Recovery A La Carte","s":9,"min":270,"r":4500}],"2025-10":[{"n":"Recovery A La Carte","s":9,"min":255,"r":35000}],"2025-11":[{"n":"Recovery A La Carte","s":13,"min":435,"r":68500}],"2025-12":[{"n":"Recovery A La Carte","s":12,"min":360,"r":64500}],"2026-01":[{"n":"Recovery A La Carte","s":22,"min":675,"r":124500},{"n":"Custom Stretching","s":1,"min":30,"r":7000},{"n":"1-on-1 Movement Breakout","s":1,"min":45,"r":16000}],"2026-02":[{"n":"Recovery A La Carte","s":22,"min":705,"r":117500}],"2026-03":[{"n":"Recovery A La Carte","s":27,"min":885,"r":149000}],"2026-04":[{"n":"Recovery A La Carte","s":14,"min":420,"r":75500}],"2026-05":[{"n":"Movement Regen","s":25,"min":2325,"r":88000},{"n":"Recovery A La Carte","s":18,"min":525,"r":90000}],"2026-06":[{"n":"Movement Regen","s":23,"min":1725,"r":76750},{"n":"Recovery A La Carte","s":13,"min":360,"r":59500}],"2026-07":[{"n":"Recovery A La Carte","s":27,"min":810,"r":90500}],"2026-08":[{"n":"Recovery A La Carte","s":61,"min":1800,"r":122000},{"n":"Movement Regen","s":12,"min":900,"r":47500}],"2026-09":[{"n":"Recovery A La Carte","s":105,"min":3150,"r":356500},{"n":"Movement Regen","s":21,"min":1575,"r":82500}]};
+function fmt(cents){if(cents===0)return'\u2014';return'$'+(cents/100).toLocaleString('en-US',{minimumFractionDigits:0,maximumFractionDigits:0})}
+const f24=DATA;
+const totalS=f24.reduce((a,d)=>a+d.s,0);
+const totalMin=f24.reduce((a,d)=>a+d.min,0);
+const totalR=DATA.reduce((a,d)=>a+d.r,0);
+const activeMo=f24.filter(d=>d.s>0).length;
+const r6=f24.slice(-6);
+const r6S=r6.reduce((a,d)=>a+d.s,0);
+const r6R=r6.reduce((a,d)=>a+d.r,0);
+document.getElementById('metrics').innerHTML=`
+  <div class="metric"><div class="label">Total sessions</div><div class="value">${totalS.toLocaleString()}</div><div class="sub">Jul 2025 – Sep 2026</div></div>
+  <div class="metric"><div class="label">Total hours</div><div class="value">${Math.round(totalMin/60).toLocaleString()}</div><div class="sub">${Math.round(totalMin/60/activeMo)} hrs/mo avg</div></div>
+  <div class="metric"><div class="label">Net revenue</div><div class="value">${fmt(totalR)}</div><div class="sub">Package rates applied</div></div>
+  <div class="metric"><div class="label">Avg hours/week</div><div class="value">${Math.round(totalMin/60/activeMo/4.33*10)/10}</div><div class="sub">${Math.round(totalMin/60/activeMo)} hrs/mo</div></div>
+  <div class="metric"><div class="label">Last 6mo sessions</div><div class="value">${r6S.toLocaleString()}</div><div class="sub">${Math.round(r6S/6)}/mo avg</div></div>
+  <div class="metric"><div class="label">Last 6mo revenue</div><div class="value">${fmt(r6R)}</div><div class="sub">${fmt(Math.round(r6R/6))}/mo avg</div></div>
+`;
+let yearHtml='';
+for(const[y,d]of Object.entries(YEARS).sort()){
+  if(d.s===0&&d.r===0)continue;
+  const mo=d.months||1;
+  const hrsWk=d.min>0?Math.round(d.min/60/mo/4.33*10)/10:'\u2014';
+  yearHtml+=`<tr class="year-row"><td>${y}</td><td class="right">${d.s.toLocaleString()}</td><td class="right">${Math.round(d.min/60).toLocaleString()}</td><td class="right">${fmt(d.r)}</td><td class="right">${d.s>0?Math.round(d.s/mo):'\u2014'}</td><td class="right">${d.min>0?Math.round(d.min/60/mo):'\u2014'}</td><td class="right">${hrsWk}</td></tr>`;
+}
+document.getElementById('yearBody').innerHTML=yearHtml;
+const labels=f24.map(d=>{const[y,mo]=d.m.split('-');return new Date(y,mo-1).toLocaleDateString('en-US',{month:'short',year:'2-digit'})});
+new Chart(document.getElementById('sessionChart'),{type:'bar',data:{labels,datasets:[{data:f24.map(d=>d.s),backgroundColor:'#00695c',borderRadius:4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{autoSkip:false,maxRotation:45}}}}});
+new Chart(document.getElementById('revenueChart'),{type:'bar',data:{labels,datasets:[{data:f24.map(d=>Math.round(d.r/100)),backgroundColor:'#2e7d32',borderRadius:4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{autoSkip:false,maxRotation:45}},y:{ticks:{callback:v=>'$'+v.toLocaleString()}}}}});
+const svcColors={'Contrast Therapy':'#00695c','Cold Plunge':'#1565c0','Sauna':'#e67e22','Custom Stretching':'#7e57c2','Movement Regen':'#78909c','Recovery A La Carte':'#d4a843','Recovery Service':'#2e7d32','1-on-1 Movement Breakout':'#c62828','Other':'#999'};
+let ts=0,tm=0,tr=0;
+let monthHtml='';
+for(const d of f24){
+  ts+=d.s;tm+=d.min;tr+=d.r;
+  const[y,mo]=d.m.split('-');
+  const label=new Date(y,mo-1).toLocaleDateString('en-US',{month:'long',year:'numeric'});
+  monthHtml+=`<tr class="month-row" data-toggle="${d.m}"><td>${label}</td><td class="right">${d.s}</td><td class="right">${Math.round(d.min/60)}h</td><td class="right">${fmt(d.r)}</td></tr>`;
+  const bd=BREAKDOWN[d.m]||[];
+  const maxS=bd.length?bd[0].s:1;
+  for(const svc of bd){
+    const barW=Math.max(2,Math.round(svc.s/maxS*120));
+    const color=svcColors[svc.n]||'#999';
+    monthHtml+=`<tr class="breakdown-row" data-month="${d.m}"><td><span class="svc-bar" style="width:${barW}px;background:${color}55"></span>${svc.n}</td><td class="right">${svc.s} sessions</td><td class="right">${Math.round(svc.min/60)}h</td><td class="right">${svc.r?fmt(svc.r):'\u2014'}</td></tr>`;
+  }
+}
+document.getElementById('monthBody').innerHTML=monthHtml;
+document.getElementById('monthFoot').innerHTML=`<tr><td>Total</td><td class="right">${ts.toLocaleString()}</td><td class="right">${Math.round(tm/60).toLocaleString()}h</td><td class="right">${fmt(tr)}</td></tr>`;
+function toggleBreakdown(month){
+  const rows=document.querySelectorAll(`.breakdown-row[data-month="${month}"]`);
+  const parentRow=document.querySelector(`.month-row[data-toggle="${month}"]`);
+  parentRow.classList.toggle('open');
+  rows.forEach(r=>r.classList.toggle('visible'));
+}
+document.getElementById('monthBody').addEventListener('click',function(e){
+  const row=e.target.closest('.month-row[data-toggle]');
+  if(row)toggleBreakdown(row.dataset.toggle);
+});
+function exportCSV(){
+  let csv='Month,Sessions,Hours,Net Revenue\n';
+  for(const d of f24)csv+=d.m+','+d.s+','+(d.min/60).toFixed(1)+','+(d.r/100).toFixed(2)+'\n';
+  csv+='\nMonth,Service,Sessions,Hours,Net Revenue\n';
+  for(const d of f24){const bd=BREAKDOWN[d.m]||[];for(const svc of bd)csv+=d.m+','+svc.n+','+svc.s+','+(svc.min/60).toFixed(1)+','+(svc.r/100).toFixed(2)+'\n';}
+  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));a.download='recovery-suite-sessions-net.csv';a.click();
+}
+</script>
+</body>
+</html>
