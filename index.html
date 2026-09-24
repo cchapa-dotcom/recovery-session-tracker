@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Recovery Suite — A La Carte Sessions</title>
+<title>Recovery Suite — Revenue Tracker</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
@@ -11,19 +11,16 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .header{background:#1a1a1a;color:#fff;padding:24px 32px}
 .header h1{font-size:22px;font-weight:500}
 .header p{font-size:13px;color:#999;margin-top:4px}
-.container{max-width:1000px;margin:0 auto;padding:24px}
+.container{max-width:1100px;margin:0 auto;padding:24px}
 .card{background:#fff;border-radius:10px;border:1px solid #e0e0e0;padding:20px;margin-bottom:16px}
-.metric-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-bottom:24px}
-.metric{background:#e0f2f1;border:1px solid #00695c22;border-radius:8px;padding:16px}
-.metric .label{font-size:11px;color:#888;text-transform:uppercase;letter-spacing:.5px}
-.metric .value{font-size:24px;font-weight:500;margin-top:4px}
-.metric .sub{font-size:12px;color:#999;margin-top:2px}
-.category-card{background:#fff;border-radius:10px;border:1px solid #e0e0e0;padding:20px;margin-bottom:16px}
-.cat-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px}
-.cat-header{font-size:14px;font-weight:600;margin-bottom:12px;padding-bottom:8px;border-bottom:2px solid #00695c}
-.cat-item{display:flex;justify-content:space-between;padding:6px 0;font-size:13px;border-bottom:1px solid #f0f0f0}
-.cat-item .svc-name{color:#555}
-.cat-item .svc-val{font-weight:500}
+.metric-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:24px}
+.metric{border-radius:8px;padding:16px;border:1px solid transparent}
+.metric-alc{background:#e0f2f1;border-color:#00695c22}
+.metric-sub{background:#e8eaf6;border-color:#283593aa}
+.metric-total{background:#fff3e0;border-color:#e6510044}
+.metric .label{font-size:10px;color:#888;text-transform:uppercase;letter-spacing:.5px}
+.metric .value{font-size:22px;font-weight:600;margin-top:4px}
+.metric .sub{font-size:11px;color:#999;margin-top:2px}
 table{width:100%;border-collapse:collapse;font-size:14px}
 th{text-align:left;padding:10px 12px;border-bottom:2px solid #e0e0e0;font-weight:500;color:#666;font-size:11px;text-transform:uppercase;letter-spacing:.5px}
 td{padding:10px 12px;border-bottom:1px solid #f0f0f0}
@@ -44,39 +41,57 @@ tfoot td{font-weight:500;border-top:2px solid #ccc;background:#fafaf8}
 .breakdown-row td{padding:6px 12px 6px 32px;font-size:13px;color:#555;border-bottom:1px solid #f5f5f0;background:#fafaf8}
 .breakdown-row td:first-child{color:#888}
 .svc-bar{display:inline-block;height:14px;border-radius:3px;margin-right:8px;vertical-align:middle;min-width:2px}
-.tag{display:inline-block;font-size:10px;padding:2px 6px;border-radius:4px;margin-left:6px;vertical-align:middle;font-weight:500}
-.tag-alc{background:#e0f2f1;color:#00695c}
-.tag-other{background:#f3e5f5;color:#7b1fa2}
-@media(max-width:600px){.cat-grid{grid-template-columns:1fr}}
+.sub-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px}
+.sub-card{background:#fff;border-radius:10px;border:1px solid #e0e0e0;padding:20px}
+.sub-card h3{font-size:14px;font-weight:600;margin-bottom:12px;padding-bottom:8px}
+.sub-card h3.alc-h{border-bottom:2px solid #00695c}
+.sub-card h3.sub-h{border-bottom:2px solid #283593}
+.sub-item{display:flex;justify-content:space-between;padding:6px 0;font-size:13px;border-bottom:1px solid #f0f0f0}
+.sub-item:last-child{border-bottom:none}
+.sub-item .n{color:#555}
+.sub-item .v{font-weight:500}
+.pill{display:inline-block;font-size:9px;padding:2px 6px;border-radius:10px;font-weight:600;vertical-align:middle;margin-left:4px}
+.pill-active{background:#c8e6c9;color:#2e7d32}
+.pill-paused{background:#fff3e0;color:#e65100}
+.legend{display:flex;gap:16px;margin:8px 0 4px;font-size:12px;color:#666}
+.legend span{display:inline-flex;align-items:center;gap:4px}
+.legend .dot{width:10px;height:10px;border-radius:2px;display:inline-block}
+@media(max-width:700px){.sub-grid{grid-template-columns:1fr}.metric-grid{grid-template-columns:repeat(2,1fr)}}
 </style>
 </head>
 <body>
 <div class="header">
-  <h1>Recovery Suite — A La Carte Sessions</h1>
-  <p>TD Athletes Edge | Recovery Suite 1 + 2 combined | A la carte bookings only (subscriptions tracked separately) | Net revenue</p>
+  <h1>Recovery Suite — Revenue Tracker</h1>
+  <p>TD Athletes Edge | Recovery Suite 1 + 2 combined | A la carte sessions + subscription memberships | Net revenue</p>
 </div>
 <div class="container">
   <div class="metric-grid" id="metrics"></div>
 
-  <h2 class="section-title">Service breakdown — All time</h2>
-  <div class="cat-grid" id="catGrid"></div>
+  <h2 class="section-title">Revenue breakdown</h2>
+  <div class="sub-grid" id="revenueBreakdown"></div>
 
-  <h2 class="section-title">Yearly summary</h2>
+  <h2 class="section-title">Yearly summary — A la carte sessions</h2>
   <div class="card">
     <table>
-      <thead><tr><th>Year</th><th class="right">Sessions</th><th class="right">Hours</th><th class="right">Revenue</th><th class="right">Avg sessions/mo</th><th class="right">Avg hrs/mo</th><th class="right">Avg hrs/wk</th></tr></thead>
+      <thead><tr><th>Year</th><th class="right">Sessions</th><th class="right">Hours</th><th class="right">A La Carte Rev</th><th class="right">Subscription Rev</th><th class="right">Total Revenue</th><th class="right">Avg hrs/wk</th></tr></thead>
       <tbody id="yearBody"></tbody>
     </table>
   </div>
-  <h2 class="section-title">Monthly sessions</h2>
+
+  <h2 class="section-title">Monthly revenue — A la carte vs subscriptions</h2>
+  <div class="card">
+    <div class="legend"><span><span class="dot" style="background:#00695c"></span>A La Carte</span><span><span class="dot" style="background:#283593"></span>Subscriptions</span></div>
+    <div class="chart-wrap"><canvas id="revenueChart"></canvas></div>
+  </div>
+
+  <h2 class="section-title">Monthly sessions — A la carte</h2>
   <div class="card"><div class="chart-wrap"><canvas id="sessionChart"></canvas></div></div>
-  <h2 class="section-title">Monthly revenue (net)</h2>
-  <div class="card"><div class="chart-wrap"><canvas id="revenueChart"></canvas></div></div>
+
   <h2 class="section-title">Monthly detail</h2>
-  <p style="font-size:13px;color:#888;margin-bottom:12px">Click a month to see the session breakdown by service type</p>
+  <p style="font-size:13px;color:#888;margin-bottom:12px">Click a month to see the a la carte session breakdown by service type</p>
   <div class="card">
     <table>
-      <thead><tr><th>Month</th><th class="right">Sessions</th><th class="right">Hours</th><th class="right">Revenue</th></tr></thead>
+      <thead><tr><th>Month</th><th class="right">A La Carte Sessions</th><th class="right">A La Carte Rev</th><th class="right">Subscriptions</th><th class="right">Total Revenue</th></tr></thead>
       <tbody id="monthBody"></tbody>
       <tfoot id="monthFoot"></tfoot>
     </table>
@@ -84,107 +99,133 @@ tfoot td{font-weight:500;border-top:2px solid #ccc;background:#fafaf8}
   <div style="margin:8px 0 32px"><button class="btn" onclick="exportCSV()">Export as CSV</button></div>
 </div>
 <script>
-const DATA = [{"m":"2025-07","s":23,"min":635,"r":112400},{"m":"2025-09","s":9,"min":270,"r":4500},{"m":"2025-10","s":9,"min":255,"r":35000},{"m":"2025-11","s":13,"min":435,"r":68500},{"m":"2025-12","s":12,"min":360,"r":64500},{"m":"2026-01","s":24,"min":750,"r":147500},{"m":"2026-02","s":22,"min":705,"r":117500},{"m":"2026-03","s":27,"min":885,"r":149000},{"m":"2026-04","s":14,"min":420,"r":75500},{"m":"2026-05","s":43,"min":2850,"r":178000},{"m":"2026-06","s":36,"min":2085,"r":136250},{"m":"2026-07","s":27,"min":810,"r":90500},{"m":"2026-08","s":73,"min":2700,"r":169500},{"m":"2026-09","s":126,"min":4725,"r":439000}];
-const YEARS = {"2025":{"s":66,"min":1955,"r":284900,"months":5},"2026":{"s":392,"min":15930,"r":1502750,"months":9}};
-const BREAKDOWN = {"2025-07":[{"n":"Contrast Therapy","s":9,"min":370,"r":60400},{"n":"Cold Plunge","s":8,"min":120,"r":20000},{"n":"Sauna","s":4,"min":85,"r":18500},{"n":"Recovery Service","s":2,"min":60,"r":13500}],"2025-09":[{"n":"Recovery A La Carte","s":9,"min":270,"r":4500}],"2025-10":[{"n":"Recovery A La Carte","s":9,"min":255,"r":35000}],"2025-11":[{"n":"Recovery A La Carte","s":13,"min":435,"r":68500}],"2025-12":[{"n":"Recovery A La Carte","s":12,"min":360,"r":64500}],"2026-01":[{"n":"Recovery A La Carte","s":22,"min":675,"r":124500},{"n":"Custom Stretching","s":1,"min":30,"r":7000},{"n":"1-on-1 Movement Breakout","s":1,"min":45,"r":16000}],"2026-02":[{"n":"Recovery A La Carte","s":22,"min":705,"r":117500}],"2026-03":[{"n":"Recovery A La Carte","s":27,"min":885,"r":149000}],"2026-04":[{"n":"Recovery A La Carte","s":14,"min":420,"r":75500}],"2026-05":[{"n":"Movement Regen","s":25,"min":2325,"r":88000},{"n":"Recovery A La Carte","s":18,"min":525,"r":90000}],"2026-06":[{"n":"Movement Regen","s":23,"min":1725,"r":76750},{"n":"Recovery A La Carte","s":13,"min":360,"r":59500}],"2026-07":[{"n":"Recovery A La Carte","s":27,"min":810,"r":90500}],"2026-08":[{"n":"Recovery A La Carte","s":61,"min":1800,"r":122000},{"n":"Movement Regen","s":12,"min":900,"r":47500}],"2026-09":[{"n":"Recovery A La Carte","s":105,"min":3150,"r":356500},{"n":"Movement Regen","s":21,"min":1575,"r":82500}]};
+const ALC_DATA = [{"m":"2025-07","s":23,"min":635,"r":112400},{"m":"2025-09","s":9,"min":270,"r":4500},{"m":"2025-10","s":9,"min":255,"r":35000},{"m":"2025-11","s":13,"min":435,"r":68500},{"m":"2025-12","s":12,"min":360,"r":64500},{"m":"2026-01","s":22,"min":675,"r":124500},{"m":"2026-02","s":22,"min":705,"r":117500},{"m":"2026-03","s":27,"min":885,"r":149000},{"m":"2026-04","s":14,"min":420,"r":75500},{"m":"2026-05","s":43,"min":2850,"r":178000},{"m":"2026-06","s":36,"min":2085,"r":136250},{"m":"2026-07","s":27,"min":810,"r":90500},{"m":"2026-08","s":73,"min":2700,"r":169500},{"m":"2026-09","s":126,"min":4725,"r":439000}];
+const ALC_YEARS = {"2025":{"s":66,"min":1955,"r":284900,"months":5},"2026":{"s":390,"min":15855,"r":1479750,"months":9}};
+const ALC_BREAKDOWN = {"2025-07":[{"n":"Contrast Therapy","s":9,"min":370,"r":60400},{"n":"Cold Plunge","s":8,"min":120,"r":20000},{"n":"Sauna","s":4,"min":85,"r":18500},{"n":"Recovery Service","s":2,"min":60,"r":13500}],"2025-09":[{"n":"Recovery A La Carte","s":9,"min":270,"r":4500}],"2025-10":[{"n":"Recovery A La Carte","s":9,"min":255,"r":35000}],"2025-11":[{"n":"Recovery A La Carte","s":13,"min":435,"r":68500}],"2025-12":[{"n":"Recovery A La Carte","s":12,"min":360,"r":64500}],"2026-01":[{"n":"Recovery A La Carte","s":22,"min":675,"r":124500}],"2026-02":[{"n":"Recovery A La Carte","s":22,"min":705,"r":117500}],"2026-03":[{"n":"Recovery A La Carte","s":27,"min":885,"r":149000}],"2026-04":[{"n":"Recovery A La Carte","s":14,"min":420,"r":75500}],"2026-05":[{"n":"Movement Regen","s":25,"min":2325,"r":88000},{"n":"Recovery A La Carte","s":18,"min":525,"r":90000}],"2026-06":[{"n":"Movement Regen","s":23,"min":1725,"r":76750},{"n":"Recovery A La Carte","s":13,"min":360,"r":59500}],"2026-07":[{"n":"Recovery A La Carte","s":27,"min":810,"r":90500}],"2026-08":[{"n":"Recovery A La Carte","s":61,"min":1800,"r":122000},{"n":"Movement Regen","s":12,"min":900,"r":47500}],"2026-09":[{"n":"Recovery A La Carte","s":105,"min":3150,"r":356500},{"n":"Movement Regen","s":21,"min":1575,"r":82500}]};
+const SUB_MONTHLY = {"2025-10":{"r":69800,"count":26,"plans":{"Pro-Member Unlimited Recovery":{"r":69800,"count":26}}},"2025-11":{"r":321750,"count":35,"plans":{"Pro-Member Unlimited Recovery":{"r":319400,"count":34},"Unlimited Normatec":{"r":2350,"count":1}}},"2025-12":{"r":364250,"count":38,"plans":{"Pro-Member Unlimited Recovery":{"r":347100,"count":36},"Unlimited Normatec":{"r":5000,"count":1},"Unlimited Recovery (Non-Pro)":{"r":12150,"count":1}}},"2026-01":{"r":410600,"count":40,"plans":{"Pro-Member Unlimited Recovery":{"r":375200,"count":38},"Unlimited Cold Plunge":{"r":8400,"count":1},"Unlimited Recovery (Non-Pro)":{"r":27000,"count":1}}},"2026-02":{"r":344500,"count":32,"plans":{"Pro-Member Unlimited Recovery":{"r":300000,"count":30},"Unlimited Cold Plunge":{"r":17500,"count":1},"Unlimited Recovery (Non-Pro)":{"r":27000,"count":1}}},"2026-03":{"r":337700,"count":33,"plans":{"Pro-Member Unlimited Recovery":{"r":293200,"count":31},"Unlimited Cold Plunge":{"r":17500,"count":1},"Unlimited Recovery (Non-Pro)":{"r":27000,"count":1}}},"2026-04":{"r":334700,"count":33,"plans":{"Pro-Member Unlimited Recovery":{"r":307700,"count":32},"Unlimited Recovery (Non-Pro)":{"r":27000,"count":1}}},"2026-05":{"r":362500,"count":35,"plans":{"Pro-Member Unlimited Recovery":{"r":335500,"count":34},"Unlimited Recovery (Non-Pro)":{"r":27000,"count":1}}},"2026-06":{"r":321370,"count":38,"plans":{"Pro-Member Unlimited Recovery":{"r":321370,"count":38}}},"2026-07":{"r":343580,"count":37,"plans":{"Pro-Member Unlimited Recovery":{"r":342930,"count":36},"Unlimited Normatec":{"r":650,"count":1}}},"2026-08":{"r":382400,"count":41,"plans":{"Pro-Member Unlimited Recovery":{"r":377400,"count":40},"Unlimited Normatec":{"r":5000,"count":1}}},"2026-09":{"r":352800,"count":36,"plans":{"Pro-Member Unlimited Recovery":{"r":347800,"count":35},"Unlimited Normatec":{"r":5000,"count":1}}}};
 
-const ALA_CARTE = new Set(['Contrast Therapy','Cold Plunge','Sauna','Movement Regen']);
+function fmt(cents){if(!cents||cents===0)return'\u2014';return'$'+(cents/100).toLocaleString('en-US',{minimumFractionDigits:0,maximumFractionDigits:0})}
 
-function fmt(cents){if(cents===0)return'\u2014';return'$'+(cents/100).toLocaleString('en-US',{minimumFractionDigits:0,maximumFractionDigits:0})}
+const totalAlcS=ALC_DATA.reduce((a,d)=>a+d.s,0);
+const totalAlcMin=ALC_DATA.reduce((a,d)=>a+d.min,0);
+const totalAlcR=ALC_DATA.reduce((a,d)=>a+d.r,0);
+const totalSubR=Object.values(SUB_MONTHLY).reduce((a,d)=>a+d.r,0);
+const totalSubCount=Object.values(SUB_MONTHLY).reduce((a,d)=>a+d.count,0);
+const combinedR=totalAlcR+totalSubR;
+const activeMo=ALC_DATA.filter(d=>d.s>0).length;
 
-const f24=DATA;
-const totalS=f24.reduce((a,d)=>a+d.s,0);
-const totalMin=f24.reduce((a,d)=>a+d.min,0);
-const totalR=f24.reduce((a,d)=>a+d.r,0);
-const activeMo=f24.filter(d=>d.s>0).length;
-const r6=f24.slice(-6);
-const r6S=r6.reduce((a,d)=>a+d.s,0);
-const r6R=r6.reduce((a,d)=>a+d.r,0);
+// Active subscriptions count
+const activeSubs=48; // from API: 42 Pro + 5 Nutrition + 1 Normatec
+const recoverySubs=43; // 42 Pro + 1 Normatec
 
 document.getElementById('metrics').innerHTML=`
-  <div class="metric"><div class="label">Total a la carte sessions</div><div class="value">${totalS.toLocaleString()}</div><div class="sub">Jul 2025 \u2013 Sep 2026</div></div>
-  <div class="metric"><div class="label">Total hours</div><div class="value">${Math.round(totalMin/60).toLocaleString()}</div><div class="sub">${Math.round(totalMin/60/activeMo)} hrs/mo avg</div></div>
-  <div class="metric"><div class="label">Net revenue</div><div class="value">${fmt(totalR)}</div><div class="sub">A la carte only</div></div>
-  <div class="metric"><div class="label">Avg hours/week</div><div class="value">${Math.round(totalMin/60/activeMo/4.33*10)/10}</div><div class="sub">${Math.round(totalMin/60/activeMo)} hrs/mo</div></div>
-  <div class="metric"><div class="label">Last 6mo sessions</div><div class="value">${r6S.toLocaleString()}</div><div class="sub">${Math.round(r6S/6)}/mo avg</div></div>
-  <div class="metric"><div class="label">Last 6mo revenue</div><div class="value">${fmt(r6R)}</div><div class="sub">${fmt(Math.round(r6R/6))}/mo avg</div></div>
+  <div class="metric metric-total"><div class="label">Combined Revenue</div><div class="value">${fmt(combinedR)}</div><div class="sub">A la carte + subscriptions</div></div>
+  <div class="metric metric-alc"><div class="label">A La Carte Sessions</div><div class="value">${totalAlcS.toLocaleString()}</div><div class="sub">${fmt(totalAlcR)} net revenue</div></div>
+  <div class="metric metric-sub"><div class="label">Subscription Revenue</div><div class="value">${fmt(totalSubR)}</div><div class="sub">${totalSubCount} invoices paid</div></div>
+  <div class="metric metric-sub"><div class="label">Active Memberships</div><div class="value">43</div><div class="sub">42 Pro + 1 Normatec</div></div>
+  <div class="metric metric-alc"><div class="label">Avg hours/week</div><div class="value">${Math.round(totalAlcMin/60/activeMo/4.33*10)/10}</div><div class="sub">${Math.round(totalAlcMin/60/activeMo)} hrs/mo avg (a la carte)</div></div>
+  <div class="metric metric-total"><div class="label">Avg monthly revenue</div><div class="value">${fmt(Math.round(combinedR/12))}</div><div class="sub">Combined, last 12 months</div></div>
 `;
 
-// Build all-time service totals split into categories
-const svcTotals={};
-for(const[m,items]of Object.entries(BREAKDOWN)){
+// Revenue breakdown cards
+const alcSvcTotals={};
+for(const[m,items]of Object.entries(ALC_BREAKDOWN)){
   for(const svc of items){
-    if(!svcTotals[svc.n])svcTotals[svc.n]={s:0,r:0,min:0};
-    svcTotals[svc.n].s+=svc.s;
-    svcTotals[svc.n].r+=svc.r;
-    svcTotals[svc.n].min+=svc.min;
+    if(!alcSvcTotals[svc.n])alcSvcTotals[svc.n]={s:0,r:0};
+    alcSvcTotals[svc.n].s+=svc.s;
+    alcSvcTotals[svc.n].r+=svc.r;
   }
 }
+const alcList=Object.entries(alcSvcTotals).map(([n,v])=>({n,...v})).sort((a,b)=>b.s-a.s);
 
-const alcItems=[];
-const otherItems=[];
-for(const[name,vals]of Object.entries(svcTotals)){
-  const entry={n:name,...vals};
-  if(ALA_CARTE.has(name))alcItems.push(entry);
-  else otherItems.push(entry);
+const subPlanTotals={};
+for(const[m,md]of Object.entries(SUB_MONTHLY)){
+  for(const[pn,pv]of Object.entries(md.plans)){
+    if(!subPlanTotals[pn])subPlanTotals[pn]={r:0,count:0};
+    subPlanTotals[pn].r+=pv.r;
+    subPlanTotals[pn].count+=pv.count;
+  }
 }
-alcItems.sort((a,b)=>b.s-a.s);
-otherItems.sort((a,b)=>b.s-a.s);
+const subList=Object.entries(subPlanTotals).map(([n,v])=>({n,...v})).sort((a,b)=>b.r-a.r);
 
-const alcTotal={s:alcItems.reduce((a,i)=>a+i.s,0),r:alcItems.reduce((a,i)=>a+i.r,0)};
-const otherTotal={s:otherItems.reduce((a,i)=>a+i.s,0),r:otherItems.reduce((a,i)=>a+i.r,0)};
-
-let catHtml=`<div class="category-card"><div class="cat-header">A La Carte Services <span style="font-weight:400;font-size:12px;color:#666">${alcTotal.s} sessions \u2022 ${fmt(alcTotal.r)}</span></div>`;
-for(const i of alcItems)catHtml+=`<div class="cat-item"><span class="svc-name">${i.n}</span><span class="svc-val">${i.s} sessions \u2022 ${fmt(i.r)}</span></div>`;
-catHtml+=`</div>`;
-
-catHtml+=`<div class="category-card"><div class="cat-header" style="border-color:#7b1fa2">Other Bookings <span style="font-weight:400;font-size:12px;color:#666">${otherTotal.s} sessions \u2022 ${fmt(otherTotal.r)}</span></div>`;
-for(const i of otherItems)catHtml+=`<div class="cat-item"><span class="svc-name">${i.n}</span><span class="svc-val">${i.s} sessions \u2022 ${fmt(i.r)}</span></div>`;
-catHtml+=`</div>`;
-document.getElementById('catGrid').innerHTML=catHtml;
+let bhtml=`<div class="sub-card"><h3 class="alc-h">A La Carte Services \u2014 ${fmt(totalAlcR)}</h3>`;
+for(const s of alcList)bhtml+=`<div class="sub-item"><span class="n">${s.n}</span><span class="v">${s.s} sessions \u2022 ${fmt(s.r)}</span></div>`;
+bhtml+=`</div><div class="sub-card"><h3 class="sub-h">Subscription Plans \u2014 ${fmt(totalSubR)}</h3>`;
+for(const s of subList)bhtml+=`<div class="sub-item"><span class="n">${s.n}</span><span class="v">${s.count} invoices \u2022 ${fmt(s.r)}</span></div>`;
+bhtml+=`</div>`;
+document.getElementById('revenueBreakdown').innerHTML=bhtml;
 
 // Yearly summary
+const subByYear={"2025":0,"2026":0};
+for(const[m,md]of Object.entries(SUB_MONTHLY)){
+  const y=m.split('-')[0];
+  subByYear[y]=(subByYear[y]||0)+md.r;
+}
+
 let yearHtml='';
-for(const[y,d]of Object.entries(YEARS).sort()){
-  if(d.s===0&&d.r===0)continue;
+for(const[y,d]of Object.entries(ALC_YEARS).sort()){
+  if(d.s===0)continue;
   const mo=d.months||1;
   const hrsWk=d.min>0?Math.round(d.min/60/mo/4.33*10)/10:'\u2014';
-  yearHtml+=`<tr class="year-row"><td>${y}</td><td class="right">${d.s.toLocaleString()}</td><td class="right">${Math.round(d.min/60).toLocaleString()}</td><td class="right">${fmt(d.r)}</td><td class="right">${d.s>0?Math.round(d.s/mo):'\u2014'}</td><td class="right">${d.min>0?Math.round(d.min/60/mo):'\u2014'}</td><td class="right">${hrsWk}</td></tr>`;
+  const subR=subByYear[y]||0;
+  yearHtml+=`<tr class="year-row"><td>${y}</td><td class="right">${d.s.toLocaleString()}</td><td class="right">${Math.round(d.min/60).toLocaleString()}</td><td class="right">${fmt(d.r)}</td><td class="right">${fmt(subR)}</td><td class="right">${fmt(d.r+subR)}</td><td class="right">${hrsWk}</td></tr>`;
 }
 document.getElementById('yearBody').innerHTML=yearHtml;
 
-// Charts
-const labels=f24.map(d=>{const[y,mo]=d.m.split('-');return new Date(y,mo-1).toLocaleDateString('en-US',{month:'short',year:'2-digit'})});
-new Chart(document.getElementById('sessionChart'),{type:'bar',data:{labels,datasets:[{data:f24.map(d=>d.s),backgroundColor:'#00695c',borderRadius:4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{autoSkip:false,maxRotation:45}}}}});
-new Chart(document.getElementById('revenueChart'),{type:'bar',data:{labels,datasets:[{data:f24.map(d=>Math.round(d.r/100)),backgroundColor:'#2e7d32',borderRadius:4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{autoSkip:false,maxRotation:45}},y:{ticks:{callback:v=>'$'+v.toLocaleString()}}}}});
+// Get all months (union of ALC and SUB)
+const allMonths=new Set([...ALC_DATA.map(d=>d.m),...Object.keys(SUB_MONTHLY)]);
+const sortedMonths=[...allMonths].sort();
+const monthLabels=sortedMonths.map(m=>{const[y,mo]=m.split('-');return new Date(y,mo-1).toLocaleDateString('en-US',{month:'short',year:'2-digit'})});
 
-// Monthly detail with service tags
-const svcColors={'Contrast Therapy':'#00695c','Cold Plunge':'#1565c0','Sauna':'#e67e22','Movement Regen':'#78909c','Recovery A La Carte':'#d4a843','Recovery Service':'#2e7d32','Custom Stretching':'#7e57c2','1-on-1 Movement Breakout':'#c62828'};
+// ALC by month lookup
+const alcByMonth={};
+for(const d of ALC_DATA)alcByMonth[d.m]=d;
 
-let ts=0,tm=0,tr=0;
+// Revenue chart (stacked)
+const alcRevData=sortedMonths.map(m=>(alcByMonth[m]?.r||0)/100);
+const subRevData=sortedMonths.map(m=>(SUB_MONTHLY[m]?.r||0)/100);
+
+new Chart(document.getElementById('revenueChart'),{type:'bar',data:{labels:monthLabels,datasets:[
+  {label:'A La Carte',data:alcRevData,backgroundColor:'#00695c',borderRadius:4},
+  {label:'Subscriptions',data:subRevData,backgroundColor:'#283593',borderRadius:4}
+]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{stacked:true,ticks:{autoSkip:false,maxRotation:45}},y:{stacked:true,ticks:{callback:v=>'$'+v.toLocaleString()}}}}});
+
+// Session chart
+const sesData=sortedMonths.map(m=>alcByMonth[m]?.s||0);
+new Chart(document.getElementById('sessionChart'),{type:'bar',data:{labels:monthLabels,datasets:[{data:sesData,backgroundColor:'#00695c',borderRadius:4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{autoSkip:false,maxRotation:45}}}}});
+
+// Monthly detail
+const svcColors={'Contrast Therapy':'#00695c','Cold Plunge':'#1565c0','Sauna':'#e67e22','Movement Regen':'#78909c','Recovery A La Carte':'#d4a843','Recovery Service':'#2e7d32'};
+let ts=0,tAlcR=0,tSubR=0;
 let monthHtml='';
-for(const d of f24){
-  ts+=d.s;tm+=d.min;tr+=d.r;
-  const[y,mo]=d.m.split('-');
+for(const m of sortedMonths){
+  const alc=alcByMonth[m]||{s:0,r:0,min:0};
+  const sub=SUB_MONTHLY[m]||{r:0,count:0};
+  ts+=alc.s;tAlcR+=alc.r;tSubR+=sub.r;
+  const[y,mo]=m.split('-');
   const label=new Date(y,mo-1).toLocaleDateString('en-US',{month:'long',year:'numeric'});
-  monthHtml+=`<tr class="month-row" data-toggle="${d.m}"><td>${label}</td><td class="right">${d.s}</td><td class="right">${Math.round(d.min/60)}h</td><td class="right">${fmt(d.r)}</td></tr>`;
-  const bd=BREAKDOWN[d.m]||[];
-  const maxS=bd.length?bd[0].s:1;
+  monthHtml+=`<tr class="month-row" data-toggle="${m}"><td>${label}</td><td class="right">${alc.s||'\u2014'}</td><td class="right">${fmt(alc.r)}</td><td class="right">${fmt(sub.r)}</td><td class="right">${fmt(alc.r+sub.r)}</td></tr>`;
+  const bd=ALC_BREAKDOWN[m]||[];
+  const maxS=bd.length?Math.max(...bd.map(s=>s.s)):1;
   for(const svc of bd){
     const barW=Math.max(2,Math.round(svc.s/maxS*120));
     const color=svcColors[svc.n]||'#999';
-    const tag=ALA_CARTE.has(svc.n)?'<span class="tag tag-alc">A La Carte</span>':'<span class="tag tag-other">Other</span>';
-    monthHtml+=`<tr class="breakdown-row" data-month="${d.m}"><td><span class="svc-bar" style="width:${barW}px;background:${color}55"></span>${svc.n}${tag}</td><td class="right">${svc.s} sessions</td><td class="right">${Math.round(svc.min/60)}h</td><td class="right">${svc.r?fmt(svc.r):'\u2014'}</td></tr>`;
+    monthHtml+=`<tr class="breakdown-row" data-month="${m}"><td><span class="svc-bar" style="width:${barW}px;background:${color}55"></span>${svc.n}</td><td class="right">${svc.s} sessions</td><td class="right">${fmt(svc.r)}</td><td class="right"></td><td class="right"></td></tr>`;
+  }
+  // Show subscription plans in breakdown
+  if(sub.r>0){
+    const plans=sub.plans||{};
+    for(const[pn,pv]of Object.entries(plans)){
+      monthHtml+=`<tr class="breakdown-row" data-month="${m}"><td><span class="svc-bar" style="width:60px;background:#28359333"></span>${pn} <span style="font-size:10px;color:#283593;font-weight:600">(SUBSCRIPTION)</span></td><td class="right">${pv.count} invoices</td><td class="right"></td><td class="right">${fmt(pv.r)}</td><td class="right"></td></tr>`;
+    }
   }
 }
 document.getElementById('monthBody').innerHTML=monthHtml;
-document.getElementById('monthFoot').innerHTML=`<tr><td>Total</td><td class="right">${ts.toLocaleString()}</td><td class="right">${Math.round(tm/60).toLocaleString()}h</td><td class="right">${fmt(tr)}</td></tr>`;
+document.getElementById('monthFoot').innerHTML=`<tr><td>Total</td><td class="right">${ts.toLocaleString()}</td><td class="right">${fmt(tAlcR)}</td><td class="right">${fmt(tSubR)}</td><td class="right">${fmt(tAlcR+tSubR)}</td></tr>`;
 
 function toggleBreakdown(month){
-  const rows=document.querySelectorAll(`.breakdown-row[data-month="${month}"]`);
-  const parentRow=document.querySelector(`.month-row[data-toggle="${month}"]`);
-  parentRow.classList.toggle('open');
-  rows.forEach(r=>r.classList.toggle('visible'));
+  document.querySelectorAll(`.breakdown-row[data-month="${month}"]`).forEach(r=>r.classList.toggle('visible'));
+  document.querySelector(`.month-row[data-toggle="${month}"]`).classList.toggle('open');
 }
 document.getElementById('monthBody').addEventListener('click',function(e){
   const row=e.target.closest('.month-row[data-toggle]');
@@ -192,15 +233,14 @@ document.getElementById('monthBody').addEventListener('click',function(e){
 });
 
 function exportCSV(){
-  let csv='Month,Service,Category,Sessions,Hours,Net Revenue\n';
-  for(const d of f24){
-    const bd=BREAKDOWN[d.m]||[];
-    for(const svc of bd){
-      const cat=ALA_CARTE.has(svc.n)?'A La Carte':'Other';
-      csv+=d.m+','+svc.n+','+cat+','+svc.s+','+(svc.min/60).toFixed(1)+','+(svc.r/100).toFixed(2)+'\n';
-    }
+  let csv='Month,Type,Service,Sessions/Invoices,Net Revenue\n';
+  for(const m of sortedMonths){
+    const bd=ALC_BREAKDOWN[m]||[];
+    for(const svc of bd)csv+=m+',A La Carte,'+svc.n+','+svc.s+','+(svc.r/100).toFixed(2)+'\n';
+    const sub=SUB_MONTHLY[m];
+    if(sub){for(const[pn,pv]of Object.entries(sub.plans||{}))csv+=m+',Subscription,'+pn+','+pv.count+','+(pv.r/100).toFixed(2)+'\n';}
   }
-  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));a.download='recovery-suite-alacarte-sessions.csv';a.click();
+  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));a.download='recovery-suite-revenue.csv';a.click();
 }
 </script>
 </body>
